@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  mysql-db:
+    image: mysql:8.0
+    container_name: mysql-container
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes" 
+      MYSQL_DATABASE: accounts
+      MYSQL_USER: admin
+      MYSQL_PASSWORD: pass
+    ports:
+      - "3306:3306"
+    networks:
+      - my_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  app:
+    build:
+      context: ./projects/adminalumnos
+      dockerfile: Dockerfile
+    container_name: adminalumnos
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-db:3306/accounts 
+      SPRING_DATASOURCE_USERNAME: admin
+      SPRING_DATASOURCE_PASSWORD: pass
+    depends_on:
+      mysql-db:
+        condition: service_healthy  
+    networks:
+      - my_network
+
+networks:
+  my_network:
+    driver: bridge
